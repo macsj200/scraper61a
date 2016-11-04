@@ -1,5 +1,6 @@
 import requests, re
 import bs4
+import types
 
 urlBase = "http://www-inst.eecs.berkeley.edu/~cs61a/fa15/"
 r = requests.get(urlBase)
@@ -17,18 +18,31 @@ url = "http://www-inst.eecs.berkeley.edu/~cs61a/fa15/hw/hw01/"
 r2 = requests.get(url)
 homework_page = bs4.BeautifulSoup(r2.text, 'html.parser')
 
-# for homework_page in homework_pages:
-code_snippets = homework_page.find("pre")#homework_page.find("div", class_="col-md-9").child
-if code_snippets != None:
-    for snippet in code_snippets:
-        print(snippet.text + "\n\n")
-        eval(snippet.text)
-        scope = dict(globals(), **locals())
-        for var in scope:
-            if isinstance(var, types.FunctionType) and var.__doc__ != "":
-                print("YAY: " + var.__doc__)
+def iterate():
+    # for homework_page in homework_pages:
+    code_snippets = homework_page.find_all("pre")#homework_page.find("div", class_="col-md-9").child
+    if code_snippets != None:
 
+        print("\n---- BUILDING CODE ----\n")
+        for snippet in code_snippets:
+            # print(snippet.text + "\n\n")
+            if "python3" not in snippet.text and ("*** YOUR CODE HERE ***" in snippet.text or "_____" in snippet.text):
+                try:
+                    exec(snippet.text.replace('_____', '5')) #completely random
+                except SyntaxError as e:
+                    print("Did nothing for this code snippet --> " + str(e))
+
+        scope = dict(locals())
+        print("\n---- LOCAL DOC TESTS FOR PAGE ----\n")
+        for var in scope:
+            # print(var); 
+            if (isinstance(scope[var], types.FunctionType)): #and scope[var].__doc__ != "*** YOUR CODE HERE ***"):
+                if scope[var].__doc__ != None:
+                    print(var + ": " + scope[var].__doc__ + "\n")
+                else:
+                    print(var + ": None\n")
 	#homework_questions = homework_page.find_all("h3", class_="question")
 	#print(homework_questions)
 
 
+iterate()
